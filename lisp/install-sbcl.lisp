@@ -63,6 +63,9 @@
     (set-opt "archive" "t"))
   (when (position "--without-install" (getf argv :argv) :test 'equal)
     (set-opt "until-extract" t))
+  (let ((pos (position "--extra-patches" (getf argv :argv) :test 'equal)))
+    (set-opt "extra-patches" (and pos (ignore-errors (nth (1+ pos) (getf argv :argv)))
+				  (pathname (nth (1+ pos) (getf argv :argv))))))
   (set-opt "prefix" (merge-pathnames (format nil "impls/~A/~A/~A/~A/" (uname-m) (uname) (getf argv :target) (opt "as")) (homedir)))
   (set-opt "src" (merge-pathnames (format nil "src/sbcl-~A/" (getf argv :version)) (homedir)))
   (labels ((with (opt)
@@ -138,10 +141,17 @@
 (defun sbcl-patch-list ()
   (or *sbcl-patch-list-cache*
       (setf *sbcl-patch-list-cache*
-            (loop for i in (list
-                            #+darwin "sbcl-posix-tests.patch"
-                            #+linux  "sbcl-1.3.11.patch")
-               collect (probe-file (merge-pathnames i (opt "patchdir")))))))
+            (append
+             (loop for i in (list
+                             #+darwin "sbcl-posix-tests.patch"
+                             #+linux  "sbcl-1.3.11.patch")
+                collect (probe-file (merge-pathnames i (opt "patchdir"))))
+             (and (opt "extra-patches")
+                  (loop for file in (directory (make-pathname
+                                                :name :wild
+                                                :type "patch"
+                                                :defaults (opt "extra-patches")))
+                     collect (probe-file file)))))))
 
 (defun sbcl-patch (argv &key revert (src (opt "src")))
   (unless (opt "sbcl.patchless")
@@ -341,6 +351,7 @@
     (format t "sbcl install options~%")
     (fmt "as" "nickname" "install non-default optioned version of SBCL")
     (fmt "install" t "Download archive")
+    (fmt "extra-patches" "directory" "Extra patches to apply to sbcl")
     (loop for (name default description sb-prefix) in *sbcl-options*
           do (fmt name default description)))
   (cons t argv))
