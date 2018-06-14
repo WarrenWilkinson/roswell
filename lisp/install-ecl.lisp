@@ -56,7 +56,7 @@
   (cons t argv))
 
 (defun ecl-download (argv)
-  (set-opt "download.uri" (format nil "~A~A.tar.gz" (ecl-uri) (ecl-version-filename (getf argv :version))))
+  (set-opt "download.uri" (format nil "ECL-~A~A.tar.gz" (ecl-uri) (ecl-version-filename (getf argv :version))))
   (set-opt "download.archive" (let ((pos (position #\/ (opt "download.uri") :from-end t)))
                                 (when pos
                                   (merge-pathnames (format nil "archives/~A" (subseq (opt "download.uri") (1+ pos))) (homedir)))))
