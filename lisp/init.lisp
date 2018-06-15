@@ -71,7 +71,8 @@ have the latest asdf, and this file has a workaround for this.
   (second (assoc param (ros-opts) :test 'equal)))
 
 (defun verbose ()
-  (let ((ret (parse-integer (opt "verbose"))))
+  (let* ((option (opt "verbose"))
+	 (ret (if (null option) 0 (parse-integer option))))
     (if (zerop ret)
         nil ret)))
 
